@@ -1137,7 +1137,7 @@ void API_EXPORTED libusb_free_container_id_descriptor(
  * Retrieve a string descriptor in C style ASCII.
  *
  * Wrapper around libusb_get_string_descriptor(). Uses the first language
- * supported by the device.
+ * supported by the device. The resulting string is NUL-terminated.
  *
  * \param dev a device handle
  * \param desc_index the index of the descriptor to retrieve
@@ -1177,9 +1177,6 @@ int API_EXPORTED libusb_get_string_descriptor_ascii(libusb_device_handle *dev,
 		sizeof(tbuf));
 	if (r < 0)
 		return r;
-
-	if (tbuf[1] != LIBUSB_DT_STRING)
-		return LIBUSB_ERROR_IO;
 
 	if (tbuf[0] > r)
 		return LIBUSB_ERROR_IO;

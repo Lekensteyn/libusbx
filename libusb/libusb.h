@@ -1733,7 +1733,8 @@ static inline int libusb_get_descriptor(libusb_device_handle *dev,
  * Retrieve a descriptor from a device.
  * This is a convenience function which formulates the appropriate control
  * message to retrieve the descriptor. The string returned is Unicode, as
- * detailed in the USB specifications.
+ * detailed in the USB specifications. Note that the resulting string is not
+ * NUL-terminated.
  *
  * \param dev a device handle
  * \param desc_index the index of the descriptor to retrieve
@@ -1746,9 +1747,21 @@ static inline int libusb_get_descriptor(libusb_device_handle *dev,
 static inline int libusb_get_string_descriptor(libusb_device_handle *dev,
 	uint8_t desc_index, uint16_t langid, unsigned char *data, int length)
 {
-	return libusb_control_transfer(dev, LIBUSB_ENDPOINT_IN,
+	int r;
+
+	r = libusb_control_transfer(dev, LIBUSB_ENDPOINT_IN,
 		LIBUSB_REQUEST_GET_DESCRIPTOR, (uint16_t)((LIBUSB_DT_STRING << 8) | desc_index),
 		langid, data, (uint16_t) length, 1000);
+
+	if (r >= 2) {
+		if (data[0] < 2)
+			return 0;
+
+		if (data[1] != LIBUSB_DT_STRING)
+			return LIBUSB_ERROR_IO;
+	}
+
+	return r;
 }
 
 int LIBUSB_CALL libusb_get_string_descriptor_ascii(libusb_device_handle *dev,
